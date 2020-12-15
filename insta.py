@@ -11,7 +11,7 @@ from datetime import datetime,timedelta,date
 import json
 import urllib.request
 
-
+# Функция аутетинтификации
 def auth(username, password, browser):
     try:
         # Авторизация
@@ -45,6 +45,7 @@ def posts_search(browser):
         browser.get(f'https://www.instagram.com/%s/' % profile)
         time.sleep(5)
 
+        # Промежуток в данном цикле можно менять в зависимости от необходимого количества получаемых постов
         for i in range(1, 4):
             browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(random.randrange(3, 5))
@@ -61,6 +62,7 @@ def posts_search(browser):
         browser.close()
         browser.quit()
 
+#Преобразования даты и времени datetime-html в дату и время в строке
 def datetime_to_date(string):
     a = list(range(0,4))
     string = string.split('T')
@@ -73,7 +75,7 @@ def datetime_to_date(string):
     string = datetime.strftime(string[0], '%d-%m-%Y') + ' ' + datetime.strftime(string[1][0], '%H:%M:%S')
     return string
 
-
+#Получение всех комментариев к одному посту
 def comments_search(post_url, browser):
     df_info_comments = pd.DataFrame()
     comments_value = []
@@ -83,9 +85,9 @@ def comments_search(post_url, browser):
     for i in range(len(post_url)):
         browser.get(post_url[i])
         time.sleep(1)
-        comments_autor.append(post_url[i])
-        comments_value.append(post_url[i])
-        comments_date.append(post_url[i])
+        comments_autor.append(post_url[i])  # Автор комментария
+        comments_value.append(post_url[i])  # Текст комментария
+        comments_date.append(post_url[i])  # Дата комментария
         qwerty = 0
         comment_scroll = True
         while comment_scroll:
@@ -108,8 +110,6 @@ def comments_search(post_url, browser):
                     '//*[@id="react-root"]/section/main/div/div[1]/article/div[3]/div[1]/ul/ul[%d]/div/li/div/div[1]/div[2]/h3/div/span/a' % comment).text)
                 date = (browser.find_element_by_xpath(
                     '//*[@id="react-root"]/section/main/div/div[1]/article/div[3]/div[1]/ul/ul[%d]/div/li/div/div[1]/div[2]/div/div/a/time' % comment).get_attribute('datetime'))
-
-
 
                 comments_date.append(datetime_to_date(date))
 
@@ -138,16 +138,22 @@ def pars_comments_for_post(browser):
     post_search.append(input('Введите ссылку на пост: '))
     comments_search(post_search, browser)
 
-# Отправление сообщения пользователю
+# Отправление сообщения пользователю в директ
 def send_message(msg):
     # ищем кнопку отправить
     message = browser.find_element_by_class_name('_862NM ')
     message.click()
     time.sleep(2)
 
-    # Not now кнопка
-    browser.find_element_by_class_name('HoLwm ').click()
-    time.sleep(1)
+    try:
+
+        # Not now кнопка
+        browser.find_element_by_class_name('HoLwm ').click()
+        time.sleep(1)
+
+    except:
+
+        _ = 42
 
     # ищем поле
     mbox = browser.find_element_by_tag_name('textarea')
@@ -155,6 +161,7 @@ def send_message(msg):
     mbox.send_keys(Keys.RETURN)
     time.sleep(1.2)
 
+# Отправление сообщения под пост
 def send_message_in_comments(msg):
 
     # поле для текста
@@ -167,7 +174,7 @@ def send_message_in_comments(msg):
     send_button = browser.find_element_by_class_name("yWX7d.y3zKF")
     send_button.click()
 
-
+# Получение информации об 1 публикации
 def pars_posts_info():
     posts_url = posts_search(browser)
 
@@ -299,12 +306,18 @@ def get_messages_from_direct():
         send_button.click()
         time.sleep(1)
 
-        # кнопка not now
-        browser.find_element_by_class_name('HoLwm').click()
-        time.sleep(1)
+        try:
+
+            # кнопка not now
+            browser.find_element_by_class_name('HoLwm').click()
+            time.sleep(1)
+
+        except:
+
+            _ = 42
 
         #TODO ДОБАВИТЬ СКРОЛЛ ДО КОНЦА ЛИЧКИ
-        
+
         messages.append([])
         messages_collect = True
         message = 1
@@ -337,11 +350,10 @@ def get_messages_from_direct():
 
 
 
-# Путь к драйверу
-path = ''
+# Для работы необходим ChromeDriver
+# и задать путь к драйверу, например
 # browser = webdriver.Chrome('F:\deep\chrome_driver\chromedriver.exe')
-browser = webdriver.Chrome(path)
-
+browser = webdriver.Chrome()
 
 #Авторизация в аккаунте instagram
 username = input('Введите имя пользователя: ')
@@ -359,10 +371,13 @@ move = int(input('Введите номер действия от 1 до 6: '))
 
 if move == 1:
     pars_posts_info()
+
 elif move == 2:
-    comments_search(posts_search(browser),browser)
+    comments_search(posts_search(browser), browser)
+
 elif move == 3:
     pars_comments_for_post(browser)
+
 elif move == 4:
     url = 'https://instagram.com/' + input('Введите имя пользователя, которому вы хотите отправить сообщение: ')
     browser.get(url)
