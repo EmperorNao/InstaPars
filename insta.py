@@ -138,23 +138,35 @@ def pars_comments_for_post(browser):
     post_search.append(input('Введите ссылку на пост: '))
     comments_search(post_search, browser)
 
+# Отправление сообщения пользователю
 def send_message(msg):
-    # Find message button
+    # ищем кнопку отправить
     message = browser.find_element_by_class_name('_862NM ')
     message.click()
     time.sleep(2)
+
+    # Not now кнопка
     browser.find_element_by_class_name('HoLwm ').click()
     time.sleep(1)
+
+    # ищем поле
     mbox = browser.find_element_by_tag_name('textarea')
     mbox.send_keys(msg)
     mbox.send_keys(Keys.RETURN)
     time.sleep(1.2)
 
-def url_name(url):
-    browser.get(url)
+def send_message_in_comments(msg):
 
-    # adjust sleep if you want
-    time.sleep(4)
+    # поле для текста
+    commentArea = browser.find_element_by_class_name('Ypffh')
+    commentArea.click()
+    commentArea = browser.find_element_by_class_name('Ypffh')
+    commentArea.send_keys(msg)
+
+    # кнопка отправить
+    send_button = browser.find_element_by_class_name("yWX7d.y3zKF")
+    send_button.click()
+
 
 def pars_posts_info():
     posts_url = posts_search(browser)
@@ -242,7 +254,8 @@ def pars_posts_info():
     df_info_posts['Link'] = post_url
     df_info_posts.to_csv('posts_info')
 
-def get_messages_from_direct(browser):
+# получить все сообщения из директа
+def get_messages_from_direct():
 
     df = pd.DataFrame()
     browser.get('https://www.instagram.com/direct/inbox/')
@@ -254,6 +267,7 @@ def get_messages_from_direct(browser):
 
     try:
 
+        # кнопка включение/отключения уведомлений
         not_now_button = browser.find_element_by_class_name('HoLwm')
         not_now_button.click()
         time.sleep(1)
@@ -275,10 +289,9 @@ def get_messages_from_direct(browser):
 
             users_collect = False
 
-    # debug print
-    print(users)
     messages = []
 
+    # по каждому пользователю проходимся в директе
     for username in range(0, len(users)):
 
         browser.get('https://www.instagram.com/' + users[username])
@@ -286,18 +299,11 @@ def get_messages_from_direct(browser):
         send_button.click()
         time.sleep(1)
 
-        try:
+        # кнопка not now
+        browser.find_element_by_class_name('HoLwm').click()
+        time.sleep(1)
 
-            not_now_button = browser.find_element_by_class_name('HoLwm')
-            not_now_button.click()
-            time.sleep(1)
-
-        except:
-
-            # нет кнопки выключить уведомления, ничего страшного
-            _ = 42
-
-        ## ДОБАВИТЬ СКРОЛЛ ДО КОНЦА ЛИЧКИ
+        #TODO ДОБАВИТЬ СКРОЛЛ ДО КОНЦА ЛИЧКИ
         
         messages.append([])
         messages_collect = True
@@ -310,6 +316,7 @@ def get_messages_from_direct(browser):
 
             try:
 
+                # ячейка по типу Среду 14:88
                 text = browser.find_element_by_xpath(
                         '//*[@id="react-root"]/section/div/div[2]/div/div/div[2]/div[2]/div/div[1]/div/div/div[%s]/div/div' % message).text
                 if text != '':
@@ -317,6 +324,7 @@ def get_messages_from_direct(browser):
                     message += 1
                 else:
 
+                    # ячейка с сообщением
                     text = browser.find_element_by_xpath(
                             '//*[@id="react-root"]/section/div/div[2]/div/div/div[2]/div[2]/div/div[1]/div/div/div[%s]/div[2]/div/div/div/div/div/div/div/div/span' % message).text
                     if text != '':
@@ -327,11 +335,12 @@ def get_messages_from_direct(browser):
 
                 messages_collect = False
 
-    # debug print
-    print(messages)
 
+
+# Путь к драйверу
+path = ''
 # browser = webdriver.Chrome('F:\deep\chrome_driver\chromedriver.exe')
-browser = webdriver.Chrome()
+browser = webdriver.Chrome(path)
 
 
 #Авторизация в аккаунте instagram
@@ -356,24 +365,23 @@ elif move == 3:
     pars_comments_for_post(browser)
 elif move == 4:
     url = 'https://instagram.com/' + input('Введите имя пользователя, которому вы хотите отправить сообщение: ')
-    url_name(url)
+    browser.get(url)
+    time.sleep(2)
+
     print("Введите сообщение для пользователя: ")
     msg = input()
     send_message(msg)
-    browser.close()
 
 elif move == 5:
     print("Введите ссылку на пост: ")
     url = input()
-    url_name(url)
-    commentArea = browser.find_element_by_class_name('Ypffh')
-    commentArea.click()
-    commentArea = browser.find_element_by_class_name('Ypffh')
+    browser.get(url)
+    time.sleep(2)
+
     print("Введите текст комментария: ")
     msg = input()
-    commentArea.send_keys(msg)
-    send_button = browser.find_element_by_class_name("yWX7d.y3zKF")
-    send_button.click()
+
+    send_message_in_comments(msg)
 
 elif move == 6:
     get_messages_from_direct(browser)
